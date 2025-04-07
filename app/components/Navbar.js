@@ -1,47 +1,87 @@
 "use client";
-import Link from "next/link";
-import { signOut, SignOut } from "firebase/auth";
+
+import { TicketIcon, PawPrintIcon, MapIcon, PhoneIcon } from "lucide-react";
+import { useAuthState } from "react-firebase-hooks/auth";
 import { auth } from "../firebase/config";
 import { useRouter } from "next/navigation";
-import { useAuthState } from "react-firebase-hooks/auth";
+import Link from "next/link";
 
-const Navbar = () => {
+export default function ZooViewHeader() {
   const [user] = useAuthState(auth);
   const router = useRouter();
 
-  // FixME:  add handle Signout method
-  const handleLogOut = () => {
-    signOut(auth)
-      .then(() => {
-        sessionStorage.removeItem("user");
-        router.push("/sign-in");
-      })
-      .catch((error) => {
-        console.log("Error Signing Out", error.message);
-      });
-  };
+  const navItems = [
+    {
+      href: "/tickets",
+      icon: <TicketIcon className="mr-2 h-5 w-5" />,
+      label: "Book Tickets",
+    },
+    {
+      href: "/animals",
+      icon: <PawPrintIcon className="mr-2 h-5 w-5" />,
+      label: "Animal Species",
+    },
+    {
+      href: "/maps",
+      icon: <MapIcon className="mr-2 h-5 w-5" />,
+      label: "Maps & Events",
+    },
+    {
+      href: "/contact",
+      icon: <PhoneIcon className="mr-2 h-5 w-5" />,
+      label: "Contact Us",
+    },
+    ...(user
+      ? [
+          {
+            href: "/edit-animals",
+            icon: <PawPrintIcon className="mr-2 h-5 w-5" />,
+            label: "Edit Animals",
+          },
+        ]
+      : []),
+  ];
 
   return (
-    <nav className="bg-gray-800 p-4 flex justify-between items-center">
-      <h1>My App</h1>
-      <div>
-        <Link href="/" className="text-white mx-2">
-          Home
+    <header className="bg-green-800 text-white shadow-md">
+      <div className="container mx-auto flex justify-between items-center p-4">
+        <Link href="/" className="text-2xl font-bold flex items-center">
+          <PawPrintIcon className="mr-2 h-8 w-8" />
+          ZooView
         </Link>
-        {user && <Link href="/protected-page">Protected Page</Link>}
-        {user ? (
-          <button
-            onClick={handleLogOut}
-            className="bg-red-500 text-white px-4 py-2 rounded ml-2"
-          >
-            Sign Out
-          </button>
-        ) : (
-          <Link href="/sign-in">SignIn</Link>
-        )}
-      </div>
-    </nav>
-  );
-};
 
-export default Navbar;
+        <nav className="flex items-center space-x-6">
+          <ul className="flex space-x-4">
+            {navItems.map((item) => (
+              <li key={item.href}>
+                <a
+                  href={item.href}
+                  className="flex items-center hover:text-green-200 transition-colors"
+                >
+                  {item.icon}
+                  {item.label}
+                </a>
+              </li>
+            ))}
+          </ul>
+
+          {!user ? (
+            <button
+              onClick={() => router.push("/sign-in")}
+              className="bg-white text-green-800 px-3 py-1 rounded hover:bg-green-100 transition-colors"
+            >
+              Employee Login
+            </button>
+          ) : (
+            <button
+              onClick={() => auth.signOut()}
+              className="bg-red-500 px-3 py-1 rounded hover:bg-red-600 transition-colors"
+            >
+              Sign Out
+            </button>
+          )}
+        </nav>
+      </div>
+    </header>
+  );
+}

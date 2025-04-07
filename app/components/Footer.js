@@ -15,13 +15,13 @@ export default function Footer() {
   return (
     <footer className="bg-green-800 text-white">
       <div className="container mx-auto px-4 py-8">
-        <div className="grid md:grid-cols-2 gap-8">
+        <div className="flex flex-col md:flex-row items-center justify-center gap-12 text-center">
           <div>
-            <h3 className="text-xl font-bold mb-4 flex items-center">
+            <h3 className="text-xl font-bold mb-4 flex items-center justify-center">
               <PawPrintIcon className="mr-2 h-6 w-6" />
               ZooView
             </h3>
-            <p className="text-sm text-green-100">
+            <p className="text-sm text-green-100 max-w-sm mx-auto">
               Connecting people with wildlife through education, conservation,
               and unforgettable experiences.
             </p>
@@ -31,7 +31,7 @@ export default function Footer() {
             <h4 className="text-lg font-semibold mb-4">Contact Us</h4>
             <ul className="space-y-2">
               {contactInfo.map((contact, index) => (
-                <li key={index} className="flex items-center">
+                <li key={index} className="flex items-center justify-center">
                   {contact.icon}
                   <span className="text-sm">{contact.text}</span>
                 </li>

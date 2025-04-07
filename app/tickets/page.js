@@ -1,11 +1,13 @@
-"use client";
+import React from "react";
 
-export default function Home() {
+const TicketsPage = () => {
   return (
     <div className="min-h-screen bg-green-100">
       <div className="p-8 text-2xl text-green-800 text-center">
-        Welcome to ZooView!
+        tickets page
       </div>
     </div>
   );
-}
+};
+
+export default TicketsPage;
