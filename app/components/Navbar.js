@@ -26,11 +26,6 @@ export default function ZooViewHeader() {
       icon: <MapIcon className="mr-2 h-5 w-5" />,
       label: "Maps & Events",
     },
-    {
-      href: "/contact",
-      icon: <PhoneIcon className="mr-2 h-5 w-5" />,
-      label: "Contact Us",
-    },
     ...(user
       ? [
           {
