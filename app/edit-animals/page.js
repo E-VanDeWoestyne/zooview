@@ -1,104 +1,162 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useAuthState } from "react-firebase-hooks/auth";
-import { useRouter } from "next/navigation";
-import { auth, db } from "../firebase/config";
 import {
   collection,
-  getDocs,
+  addDoc,
+  onSnapshot,
   updateDoc,
   doc,
-  addDoc,
 } from "firebase/firestore";
+import { auth, db } from "../firebase/config";
+import { useAuthState } from "react-firebase-hooks/auth";
+import { useRouter } from "next/navigation";
 
 export default function EditAnimals() {
   const [user, loading] = useAuthState(auth);
-  const [animals, setAnimals] = useState([]);
-  const [editing, setEditing] = useState({});
-  const [newAnimalName, setNewAnimalName] = useState("");
   const router = useRouter();
+  const [animals, setAnimals] = useState([]);
+  const [newAnimal, setNewAnimal] = useState({
+    name: "",
+    description: "",
+    imageUrl: "",
+  });
+  const [editing, setEditing] = useState({});
 
   useEffect(() => {
     if (!loading && !user) {
       router.push("/sign-in");
-    } else if (user) {
-      fetchAnimals();
     }
-  }, [user, loading]);
+  }, [user, loading, router]);
 
-  const fetchAnimals = async () => {
-    const snapshot = await getDocs(collection(db, "animals"));
-    const animalList = snapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data(),
-    }));
-    setAnimals(animalList);
+  useEffect(() => {
+    const unsubscribe = onSnapshot(collection(db, "animals"), (snapshot) => {
+      const animalData = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+      setAnimals(animalData);
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  const handleAdd = async () => {
+    if (!newAnimal.name.trim()) return;
+    await addDoc(collection(db, "animals"), newAnimal);
+    setNewAnimal({ name: "", description: "", imageUrl: "" });
   };
 
-  const handleChange = (id, value) => {
-    setEditing({ ...editing, [id]: value });
+  const handleEditChange = (id, field, value) => {
+    setEditing((prev) => ({
+      ...prev,
+      [id]: {
+        ...prev[id],
+        [field]: value,
+      },
+    }));
   };
 
   const handleSave = async (id) => {
+    const updated = editing[id];
+    if (!updated?.name?.trim()) return;
     const docRef = doc(db, "animals", id);
-    await updateDoc(docRef, { name: editing[id] });
-    setEditing((prev) => {
-      const copy = { ...prev };
-      delete copy[id];
-      return copy;
-    });
+    await updateDoc(docRef, updated);
+    setEditing((prev) => ({ ...prev, [id]: null }));
   };
 
-  const handleAddAnimal = async () => {
-    if (!newAnimalName.trim()) return;
-    await addDoc(collection(db, "animals"), { name: newAnimalName });
-    setNewAnimalName("");
-    fetchAnimals(); // refresh list
-  };
-
-  if (loading) {
-    return <div className="text-white text-2xl p-4">Loading...</div>;
-  }
+  if (loading) return <div className="p-4 text-green-800 text-xl">Loading...</div>;
 
   return (
     <div className="min-h-screen bg-green-100 p-8">
-      <h1 className="text-2xl text-green-800 mb-6">Edit Animal Page</h1>
+      <h1 className="text-3xl font-semibold text-green-800 mb-6">
+        ✏️ Edit Animal Page
+      </h1>
 
-      {/* Add New Animal */}
-      <div className="mb-6">
+      {/* Add new animal form */}
+      <div className="bg-white rounded-xl shadow-md p-4 mb-6 border border-green-200 max-w-xl">
+        <h2 className="text-lg font-bold text-green-800 mb-2">Add New Animal</h2>
         <input
           type="text"
-          placeholder="New animal name"
-          className="p-2 rounded border border-green-600 text-black"
-          value={newAnimalName}
-          onChange={(e) => setNewAnimalName(e.target.value)}
+          placeholder="Name"
+          className="mb-2 w-full p-2 border border-green-600 rounded text-green-900 placeholder-green-500"
+          value={newAnimal.name}
+          onChange={(e) =>
+            setNewAnimal({ ...newAnimal, name: e.target.value })
+          }
+        />
+        <input
+          type="text"
+          placeholder="Description"
+          className="mb-2 w-full p-2 border border-green-600 rounded text-green-900 placeholder-green-500"
+          value={newAnimal.description}
+          onChange={(e) =>
+            setNewAnimal({ ...newAnimal, description: e.target.value })
+          }
+        />
+        <input
+          type="text"
+          placeholder="Image URL"
+          className="mb-2 w-full p-2 border border-green-600 rounded text-green-900 placeholder-green-500"
+          value={newAnimal.imageUrl}
+          onChange={(e) =>
+            setNewAnimal({ ...newAnimal, imageUrl: e.target.value })
+          }
         />
         <button
-          onClick={handleAddAnimal}
-          className="ml-2 px-4 py-2 bg-green-700 text-black rounded"
+          className="px-4 py-2 bg-green-700 text-white rounded hover:bg-green-800"
+          onClick={handleAdd}
         >
           Add Animal
         </button>
       </div>
 
-      {/* Edit Existing Animals */}
-      {animals.map((animal) => (
-        <div key={animal.id} className="mb-4">
-          <input
-            type="text"
-            className="p-2 rounded border border-green-600 text-black"
-            value={editing[animal.id] ?? animal.name}
-            onChange={(e) => handleChange(animal.id, e.target.value)}
-          />
-          <button
-            onClick={() => handleSave(animal.id)}
-            className="ml-2 px-4 py-2 bg-green-700 text-black rounded"
+      {/* Edit existing animals */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+        {animals.map((animal) => (
+          <div
+            key={animal.id}
+            className="bg-white rounded-xl shadow-md p-4 border border-green-200"
           >
-            Save
-          </button>
-        </div>
-      ))}
+            <input
+              type="text"
+              className="mb-2 w-full p-2 border border-green-600 rounded text-green-900 bg-white"
+              value={
+                editing[animal.id]?.name ?? animal.name
+              }
+              onChange={(e) =>
+                handleEditChange(animal.id, "name", e.target.value)
+              }
+            />
+            <input
+              type="text"
+              className="mb-2 w-full p-2 border border-green-600 rounded text-green-900 bg-white"
+              value={
+                editing[animal.id]?.description ?? animal.description
+              }
+              onChange={(e) =>
+                handleEditChange(animal.id, "description", e.target.value)
+              }
+            />
+            <input
+              type="text"
+              className="mb-2 w-full p-2 border border-green-600 rounded text-green-900 bg-white"
+              value={
+                editing[animal.id]?.imageUrl ?? animal.imageUrl
+              }
+              onChange={(e) =>
+                handleEditChange(animal.id, "imageUrl", e.target.value)
+              }
+            />
+            <button
+              className="px-4 py-2 bg-green-700 text-white rounded hover:bg-green-800"
+              onClick={() => handleSave(animal.id)}
+            >
+              Save
+            </button>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
