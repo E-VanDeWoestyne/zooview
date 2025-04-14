@@ -1,12 +1,30 @@
 "use client";
 
 import React from "react";
-import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
-import "leaflet/dist/leaflet.css";
-import L from "leaflet";
-import { CalendarIcon, LocateFixedIcon, TicketIcon, Info } from "lucide-react"; // Changed LocationIcon to LocateFixedIcon
+import dynamic from "next/dynamic";
+import { CalendarIcon, LocateFixedIcon, TicketIcon, Info } from "lucide-react";
+
+// Dynamically import MapContainer, TileLayer, Marker, and Popup to disable server-side rendering
+const MapContainer = dynamic(
+  () => import("react-leaflet").then((mod) => mod.MapContainer),
+  { ssr: false }
+);
+const TileLayer = dynamic(
+  () => import("react-leaflet").then((mod) => mod.TileLayer),
+  { ssr: false }
+);
+const Marker = dynamic(
+  () => import("react-leaflet").then((mod) => mod.Marker),
+  { ssr: false }
+);
+const Popup = dynamic(() => import("react-leaflet").then((mod) => mod.Popup), {
+  ssr: false,
+});
 
 // Fix default marker icons for Leaflet with Next.js
+import "leaflet/dist/leaflet.css";
+import L from "leaflet";
+
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
   iconRetinaUrl:
